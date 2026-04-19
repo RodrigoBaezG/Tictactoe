@@ -1,72 +1,381 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   display: flex;
   justify-content: center;
   align-items: center;
-  font: 14px "Century Gothic", Futura, sans-serif;
-  margin: 20px;
-  background-color: #1a1a1a;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  margin: 0;
+  padding: 20px 0;
+  background-color: #121212;
   color: #fff;
+  min-height: 100vh;
+  flex-direction: column;
 }
 
-ol,
-ul {
-  padding-left: 30px;
-}
-
-.board-row:after {
-  clear: both;
-  content: "";
-  display: table;
-}
-
-.status {
-  margin-bottom: 10px;
-}
-
-.square {
-  background: #1a1a1a;
-  border: 1px solid #eee;
-  float: left;
-  font-size: 40px;
-  font-weight: bold;
-  line-height: 34px;
-  height: 70px;
-  margin-right: -1px;
-  margin-top: -1px;
-  padding: 0;
+/* ── Title ─────────────────────────────────────────── */
+.game-title {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin: 0 0 1.25rem;
   text-align: center;
-  width: 70px;
+  color: #f0f0f0;
+}
+
+/* ── Mode selector ──────────────────────────────────── */
+.mode-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.mode-button {
+  background: #1e1e1e;
+  color: #777;
+  border: 1px solid #2e2e2e;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mode-button:hover {
+  color: #ccc;
+  border-color: #444;
+}
+
+.mode-button.active {
+  background: #2a2a2a;
   color: #fff;
+  border-color: #555;
 }
 
-.square:focus {
-  outline: none;
+/* ── Scoreboard ─────────────────────────────────────── */
+.scoreboard {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.25rem;
+  padding: 12px 28px;
+  background: #1e1e1e;
+  border-radius: 12px;
+  border: 1px solid #2a2a2a;
 }
 
-.kbd-navigation .square:focus {
-  background: #ddd;
+.score-item {
+  text-align: center;
+}
+
+.score-label {
+  font-size: 0.7rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.score-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score-value.x    { color: #ef5350; }
+.score-value.o    { color: #42a5f5; }
+.score-value.draw { color: #888; }
+
+/* ── Player turn indicator ──────────────────────────── */
+.player-turn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding: 8px 20px;
+  background: #1e1e1e;
+  border-radius: 10px;
+  border: 1px solid #2a2a2a;
+  min-width: 180px;
+  justify-content: center;
+}
+
+.player-badge {
+  font-size: 1.35rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  opacity: 0.35;
+  transition: all 0.25s ease;
+}
+
+.player-badge.x { color: #ef5350; }
+.player-badge.o { color: #42a5f5; }
+
+.player-badge.active {
+  opacity: 1;
+  border-color: currentColor;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.vs-text {
+  color: #444;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.cpu-thinking {
+  font-size: 0.78rem;
+  color: #42a5f5;
+  animation: blink 1s ease infinite;
+  margin-left: 4px;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
+}
+
+/* ── Game layout ────────────────────────────────────── */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .game {
   display: flex;
   flex-direction: row;
+  gap: 1.5rem;
+  align-items: flex-start;
 }
 
-.game-info {
-  margin-left: 20px;
-  color: #fff;
+/* ── Board card ─────────────────────────────────────── */
+.game-board {
+  background: #1e1e1e;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+  border: 1px solid #2a2a2a;
 }
 
+.board-row {
+  display: flex;
+}
+
+/* ── Status text ────────────────────────────────────── */
+.status {
+  margin-bottom: 14px;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 600;
+  min-height: 1.6em;
+  color: #ccc;
+}
+
+.status-winner { font-size: 1.25rem; }
+.status-winner.status-x { color: #ef5350; }
+.status-winner.status-o { color: #42a5f5; }
+.status-draw            { color: #aaa; }
+
+.turn-player      { font-weight: 700; }
+.turn-player.turn-x { color: #ef5350; }
+.turn-player.turn-o { color: #42a5f5; }
+
+/* ── Squares ────────────────────────────────────────── */
+.square {
+  background: #121212;
+  border: 2px solid #2a2a2a;
+  font-family: inherit;
+  font-size: 2.6rem;
+  font-weight: 700;
+  height: 90px;
+  width: 90px;
+  line-height: 90px;
+  padding: 0;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.square:hover:not(.has-value):not(.winning-square) {
+  background: #1a1a1a;
+  border-color: #3a3a3a;
+}
+
+.square:focus-visible {
+  outline: 2px solid #42a5f5;
+  outline-offset: -2px;
+}
+
+.square[data-value='X'] { color: #ef5350; }
+.square[data-value='O'] { color: #42a5f5; }
+
+/* Pop-in when a piece is first placed */
+.square.has-value {
+  animation: pop-in 0.15s ease-out;
+}
+
+/* Winning squares */
 .square.winning-square {
-  background-color: #4caf50;
+  cursor: default;
+}
+
+.square.winning-square[data-value='X'] {
+  background-color: #2d1515;
+  border-color: #ef5350;
+  animation: winner-pulse-x 0.8s ease infinite alternate;
+}
+
+.square.winning-square[data-value='O'] {
+  background-color: #151a2d;
+  border-color: #42a5f5;
+  animation: winner-pulse-o 0.8s ease infinite alternate;
+}
+
+@keyframes pop-in {
+  from { transform: scale(0.35); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes winner-pulse-x {
+  from { box-shadow: 0 0 0   0   rgba(239, 83, 80, 0); }
+  to   { box-shadow: 0 0 14px 4px rgba(239, 83, 80, 0.4); }
+}
+
+@keyframes winner-pulse-o {
+  from { box-shadow: 0 0 0   0   rgba(66, 165, 245, 0); }
+  to   { box-shadow: 0 0 14px 4px rgba(66, 165, 245, 0.4); }
+}
+
+/* ── Game info panel ────────────────────────────────── */
+.game-info {
+  background: #1e1e1e;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+  border: 1px solid #2a2a2a;
+  min-width: 190px;
+  max-height: 370px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
 }
 
 .reset-button {
-  background-color: #1a1a1a;
-  color: white;
+  background: #242424;
+  color: #ccc;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.reset-button:hover {
+  background: #2e2e2e;
+  border-color: #555;
+  color: #fff;
+}
+
+/* ── Move history ───────────────────────────────────── */
+.history-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #555;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.history-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 2px;
 }
 
 .history-button {
-  background-color: #1a1a1a;
-  color: white;
+  background: #242424;
+  color: #888;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.history-button:hover {
+  background: #2e2e2e;
+  color: #ccc;
+  border-color: #3a3a3a;
+}
+
+.history-button.current {
+  background: #2a2a2a;
+  color: #ddd;
+  border-color: #555;
+}
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 600px) {
+  .game {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .game-info {
+    width: 100%;
+    max-width: 310px;
+    max-height: none;
+  }
+
+  .square {
+    font-size: 2rem;
+    height: 72px;
+    width: 72px;
+    line-height: 72px;
+  }
+
+  .game-title {
+    font-size: 1.5rem;
+  }
+
+  .scoreboard {
+    gap: 1.25rem;
+    padding: 10px 20px;
+  }
 }

@@ -49,7 +49,7 @@ export default function Game() {
 
   function handleReset() {
     if (history.length > 1 && !gameOver) {
-      if (!window.confirm('¿Abandonar la partida actual y reiniciar?')) return;
+      if (!window.confirm('Abandon the current game and restart?')) return;
     }
     gameScored.current = false;
     reset();
@@ -63,46 +63,43 @@ export default function Game() {
 
   return (
     <div className="game-container">
-      <h1 className="game-title">Tres en Raya</h1>
+      <h1 className="game-title">Tic-Tac-Toe</h1>
 
-      <div className="mode-selector">
-        <button
-          className={`mode-button${gameMode === 'pvp' ? ' active' : ''}`}
-          onClick={() => handleModeChange('pvp')}
-        >
-          2 Jugadores
-        </button>
-        <button
-          className={`mode-button${gameMode === 'cpu' ? ' active' : ''}`}
-          onClick={() => handleModeChange('cpu')}
-        >
-          vs CPU
-        </button>
-      </div>
+      <div className="main-layout">
+        {/* ── Left panel ── */}
+        <div className="side-panel">
+          <div className="mode-selector">
+            <button
+              className={`mode-button${gameMode === 'pvp' ? ' active' : ''}`}
+              onClick={() => handleModeChange('pvp')}
+            >
+              2 Players
+            </button>
+            <button
+              className={`mode-button${gameMode === 'cpu' ? ' active' : ''}`}
+              onClick={() => handleModeChange('cpu')}
+            >
+              vs CPU
+            </button>
+          </div>
 
-      <div className="scoreboard">
-        <div className="score-item">
-          <div className="score-label">{gameMode === 'cpu' ? 'Tú (X)' : 'Jugador X'}</div>
-          <div className="score-value x">{score.X}</div>
+          <div className="scoreboard">
+            <div className="score-item">
+              <div className="score-label">{gameMode === 'cpu' ? 'You (X)' : 'Player X'}</div>
+              <div className="score-value x">{score.X}</div>
+            </div>
+            <div className="score-item">
+              <div className="score-label">Draws</div>
+              <div className="score-value draw">{score.draw}</div>
+            </div>
+            <div className="score-item">
+              <div className="score-label">{gameMode === 'cpu' ? 'CPU (O)' : 'Player O'}</div>
+              <div className="score-value o">{score.O}</div>
+            </div>
+          </div>
         </div>
-        <div className="score-item">
-          <div className="score-label">Empates</div>
-          <div className="score-value draw">{score.draw}</div>
-        </div>
-        <div className="score-item">
-          <div className="score-label">{gameMode === 'cpu' ? 'CPU (O)' : 'Jugador O'}</div>
-          <div className="score-value o">{score.O}</div>
-        </div>
-      </div>
 
-      <div className="player-turn">
-        <span className={`player-badge x${xIsNext && !gameOver ? ' active' : ''}`}>X</span>
-        <span className="vs-text">VS</span>
-        <span className={`player-badge o${!xIsNext && !gameOver ? ' active' : ''}`}>O</span>
-        {cpuThinking && <span className="cpu-thinking">CPU pensando…</span>}
-      </div>
-
-      <div className="game">
+        {/* ── Center: board ── */}
         <div className="game-board">
           <Board
             xIsNext={xIsNext}
@@ -111,10 +108,20 @@ export default function Game() {
             disabled={gameMode === 'cpu' && !xIsNext}
           />
         </div>
-        <div className="game-info">
+
+        {/* ── Right panel ── */}
+        <div className="side-panel">
+          <div className="player-turn">
+            <span className={`player-badge x${xIsNext && !gameOver ? ' active' : ''}`}>X</span>
+            <span className="vs-text">VS</span>
+            <span className={`player-badge o${!xIsNext && !gameOver ? ' active' : ''}`}>O</span>
+            {cpuThinking && <span className="cpu-thinking">CPU thinking…</span>}
+          </div>
+
           <button className="reset-button" onClick={handleReset}>
-            Reiniciar Juego
+            Restart Game
           </button>
+
           <MoveHistory history={history} currentMove={currentMove} onJump={jumpTo} />
         </div>
       </div>

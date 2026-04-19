@@ -3,10 +3,10 @@ export default function MoveHistory({ history, currentMove, onJump }) {
 
   return (
     <div>
-      <p className="history-title">Historial</p>
+      <p className="history-title">History</p>
       <ol className="history-list">
         {history.map((_, move) => {
-          const label = move === 0 ? 'Inicio del juego' : `Movimiento #${move}`;
+          const label = move === 0 ? 'Game start' : `Move #${move}`;
           return (
             <li key={move}>
               <button

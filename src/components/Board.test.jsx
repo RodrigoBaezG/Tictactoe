@@ -13,7 +13,7 @@ describe('Board', () => {
 
   it('shows X turn status at the start', () => {
     render(<Board squares={empty} onPlay={() => {}} xIsNext={true} />);
-    expect(screen.getByText(/turno/i)).toBeInTheDocument();
+    expect(screen.getByText(/turn/i)).toBeInTheDocument();
     expect(screen.getByText('X')).toBeInTheDocument();
   });
 
@@ -56,20 +56,19 @@ describe('Board', () => {
   it('shows winner message when X wins', () => {
     const squares = ['X', 'X', 'X', null, null, null, null, null, null];
     render(<Board squares={squares} onPlay={() => {}} xIsNext={false} />);
-    expect(screen.getByText(/X gana/i)).toBeInTheDocument();
+    expect(screen.getByText(/X wins/i)).toBeInTheDocument();
   });
 
   it('shows winner message when O wins', () => {
     const squares = ['O', 'O', 'O', null, null, null, null, null, null];
     render(<Board squares={squares} onPlay={() => {}} xIsNext={true} />);
-    expect(screen.getByText(/O gana/i)).toBeInTheDocument();
+    expect(screen.getByText(/O wins/i)).toBeInTheDocument();
   });
 
   it('shows draw message when the board is full with no winner', () => {
-    // X O X / O X X / O X O
     const squares = ['X', 'O', 'X', 'O', 'X', 'X', 'O', 'X', 'O'];
     render(<Board squares={squares} onPlay={() => {}} xIsNext={true} />);
-    expect(screen.getByText(/empate/i)).toBeInTheDocument();
+    expect(screen.getByText('Draw!')).toBeInTheDocument();
   });
 
   it('marks the three winning squares with winning-square class', () => {

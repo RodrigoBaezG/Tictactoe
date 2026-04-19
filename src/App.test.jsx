@@ -1,24 +1,22 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Game from './App';
 
-// Helper: returns only the 9 board squares (excludes reset + history buttons)
 function getBoardSquares() {
   return screen.getAllByRole('button').filter((btn) =>
     ['X', 'O', ''].includes(btn.textContent)
   );
 }
 
-// Switch to PvP mode so tests can place O manually
 async function switchToPvP(user) {
-  await user.click(screen.getByText(/2 jugadores/i));
+  await user.click(screen.getByText(/2 players/i));
 }
 
 describe('Game — integration', () => {
   it('renders the title', () => {
     render(<Game />);
-    expect(screen.getByText('Tres en Raya')).toBeInTheDocument();
+    expect(screen.getByText('Tic-Tac-Toe')).toBeInTheDocument();
   });
 
   it('starts in CPU mode by default', () => {
@@ -58,14 +56,13 @@ describe('Game — integration', () => {
     await switchToPvP(user);
     const squares = getBoardSquares();
 
-    // X wins top row: 0, 1, 2  |  O plays 3, 4
-    await user.click(squares[0]); // X
-    await user.click(squares[3]); // O
-    await user.click(squares[1]); // X
-    await user.click(squares[4]); // O
+    await user.click(squares[0]);
+    await user.click(squares[3]);
+    await user.click(squares[1]);
+    await user.click(squares[4]);
     await user.click(squares[2]); // X wins
 
-    expect(screen.getByText(/X gana/i)).toBeInTheDocument();
+    expect(screen.getByText(/X wins/i)).toBeInTheDocument();
   });
 
   it('increments X score after a win in PvP mode', async () => {
@@ -78,7 +75,7 @@ describe('Game — integration', () => {
     await user.click(squares[3]);
     await user.click(squares[1]);
     await user.click(squares[4]);
-    await user.click(squares[2]); // X wins
+    await user.click(squares[2]);
 
     expect(screen.getByText('1')).toBeInTheDocument();
   });
@@ -89,13 +86,12 @@ describe('Game — integration', () => {
     await switchToPvP(user);
     const squares = getBoardSquares();
 
-    // Known draw sequence: X=0,2,5,6,7  O=1,3,4,8
     const moves = [0, 1, 2, 3, 5, 4, 6, 8, 7];
     for (const idx of moves) {
       await user.click(squares[idx]);
     }
 
-    expect(screen.getByText('¡Empate!')).toBeInTheDocument();
+    expect(screen.getByText('Draw!')).toBeInTheDocument();
   });
 
   it('shows move history buttons after moves in PvP mode', async () => {
@@ -107,8 +103,8 @@ describe('Game — integration', () => {
     await user.click(squares[0]);
     await user.click(squares[1]);
 
-    expect(screen.getByText(/movimiento #1/i)).toBeInTheDocument();
-    expect(screen.getByText(/movimiento #2/i)).toBeInTheDocument();
+    expect(screen.getByText(/move #1/i)).toBeInTheDocument();
+    expect(screen.getByText(/move #2/i)).toBeInTheDocument();
   });
 
   it('time-travels to a previous move', async () => {
@@ -117,12 +113,11 @@ describe('Game — integration', () => {
     await switchToPvP(user);
     const squares = getBoardSquares();
 
-    await user.click(squares[0]); // X at 0
-    await user.click(squares[1]); // O at 1
-    await user.click(squares[2]); // X at 2
+    await user.click(squares[0]);
+    await user.click(squares[1]);
+    await user.click(squares[2]);
 
-    const histBtn = screen.getByText(/movimiento #1/i);
-    await user.click(histBtn);
+    await user.click(screen.getByText(/move #1/i));
 
     expect(squares[0]).toHaveTextContent('X');
     expect(squares[1]).toHaveTextContent('');
@@ -133,8 +128,7 @@ describe('Game — integration', () => {
     const user = userEvent.setup();
     render(<Game />);
 
-    const resetBtn = screen.getByText(/reiniciar/i);
-    await user.click(resetBtn);
+    await user.click(screen.getByText(/restart game/i));
 
     getBoardSquares().forEach((sq) => expect(sq).toHaveTextContent(''));
   });
@@ -146,13 +140,11 @@ describe('Game — integration', () => {
     await switchToPvP(user);
     const squares = getBoardSquares();
 
-    await user.click(squares[0]); // make a move
-
-    const resetBtn = screen.getByText(/reiniciar/i);
-    await user.click(resetBtn);
+    await user.click(squares[0]);
+    await user.click(screen.getByText(/restart game/i));
 
     expect(confirmSpy).toHaveBeenCalledOnce();
-    expect(squares[0]).toHaveTextContent('X'); // not reset
+    expect(squares[0]).toHaveTextContent('X');
 
     confirmSpy.mockRestore();
   });
@@ -161,7 +153,7 @@ describe('Game — integration', () => {
     const user = userEvent.setup();
     render(<Game />);
 
-    const pvpBtn = screen.getByText(/2 jugadores/i);
+    const pvpBtn = screen.getByText(/2 players/i);
     await user.click(pvpBtn);
     expect(pvpBtn).toHaveClass('active');
 
@@ -177,9 +169,8 @@ describe('Game — CPU mode', () => {
     render(<Game />);
     const squares = getBoardSquares();
 
-    await user.click(squares[0]); // X plays
+    await user.click(squares[0]);
 
-    // Board is now disabled for O turn — click should be ignored
     await user.click(squares[1]);
     expect(squares[1]).toHaveTextContent('');
   });
@@ -189,9 +180,8 @@ describe('Game — CPU mode', () => {
     render(<Game />);
     const squares = getBoardSquares();
 
-    act(() => { fireEvent.click(squares[0]); }); // X plays
+    act(() => { fireEvent.click(squares[0]); });
 
-    // Before delay fires: only X is placed
     expect(squares.filter((sq) => sq.textContent !== '').length).toBe(1);
 
     await act(async () => { vi.advanceTimersByTime(600); });
@@ -205,12 +195,11 @@ describe('Game — CPU mode', () => {
     render(<Game />);
     const squares = getBoardSquares();
 
-    act(() => { fireEvent.click(squares[0]); }); // X plays at 0
+    act(() => { fireEvent.click(squares[0]); });
 
     await act(async () => { vi.advanceTimersByTime(600); });
 
-    const oSquares = squares.filter((sq) => sq.textContent === 'O');
-    expect(oSquares.length).toBe(1);
+    expect(squares.filter((sq) => sq.textContent === 'O').length).toBe(1);
     vi.useRealTimers();
   });
 });

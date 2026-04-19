@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Game from './App';
 
@@ -10,10 +10,20 @@ function getBoardSquares() {
   );
 }
 
+// Switch to PvP mode so tests can place O manually
+async function switchToPvP(user) {
+  await user.click(screen.getByText(/2 jugadores/i));
+}
+
 describe('Game — integration', () => {
   it('renders the title', () => {
     render(<Game />);
     expect(screen.getByText('Tres en Raya')).toBeInTheDocument();
+  });
+
+  it('starts in CPU mode by default', () => {
+    render(<Game />);
+    expect(screen.getByText(/vs cpu/i)).toHaveClass('active');
   });
 
   it('renders 9 empty squares at the start', () => {
@@ -29,9 +39,10 @@ describe('Game — integration', () => {
     expect(zeros.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('places X then O on consecutive clicks', async () => {
+  it('places X then O on consecutive clicks in PvP mode', async () => {
     const user = userEvent.setup();
     render(<Game />);
+    await switchToPvP(user);
     const squares = getBoardSquares();
 
     await user.click(squares[0]);
@@ -41,9 +52,10 @@ describe('Game — integration', () => {
     expect(squares[1]).toHaveTextContent('O');
   });
 
-  it('detects X winning', async () => {
+  it('detects X winning in PvP mode', async () => {
     const user = userEvent.setup();
     render(<Game />);
+    await switchToPvP(user);
     const squares = getBoardSquares();
 
     // X wins top row: 0, 1, 2  |  O plays 3, 4
@@ -56,9 +68,10 @@ describe('Game — integration', () => {
     expect(screen.getByText(/X gana/i)).toBeInTheDocument();
   });
 
-  it('increments X score after a win', async () => {
+  it('increments X score after a win in PvP mode', async () => {
     const user = userEvent.setup();
     render(<Game />);
+    await switchToPvP(user);
     const squares = getBoardSquares();
 
     await user.click(squares[0]);
@@ -67,17 +80,16 @@ describe('Game — integration', () => {
     await user.click(squares[4]);
     await user.click(squares[2]); // X wins
 
-    // Score for X should now be 1
-    const xScore = screen.getByText('1');
-    expect(xScore).toBeInTheDocument();
+    expect(screen.getByText('1')).toBeInTheDocument();
   });
 
-  it('detects a draw', async () => {
+  it('detects a draw in PvP mode', async () => {
     const user = userEvent.setup();
     render(<Game />);
+    await switchToPvP(user);
     const squares = getBoardSquares();
 
-    // Known draw sequence (indices): X=0,2,5,6,7  O=1,3,4,8
+    // Known draw sequence: X=0,2,5,6,7  O=1,3,4,8
     const moves = [0, 1, 2, 3, 5, 4, 6, 8, 7];
     for (const idx of moves) {
       await user.click(squares[idx]);
@@ -86,9 +98,10 @@ describe('Game — integration', () => {
     expect(screen.getByText('¡Empate!')).toBeInTheDocument();
   });
 
-  it('shows move history buttons after moves', async () => {
+  it('shows move history buttons after moves in PvP mode', async () => {
     const user = userEvent.setup();
     render(<Game />);
+    await switchToPvP(user);
     const squares = getBoardSquares();
 
     await user.click(squares[0]);
@@ -101,6 +114,7 @@ describe('Game — integration', () => {
   it('time-travels to a previous move', async () => {
     const user = userEvent.setup();
     render(<Game />);
+    await switchToPvP(user);
     const squares = getBoardSquares();
 
     await user.click(squares[0]); // X at 0
@@ -110,7 +124,6 @@ describe('Game — integration', () => {
     const histBtn = screen.getByText(/movimiento #1/i);
     await user.click(histBtn);
 
-    // After jumping to move 1: only square[0] has X, rest empty
     expect(squares[0]).toHaveTextContent('X');
     expect(squares[1]).toHaveTextContent('');
     expect(squares[2]).toHaveTextContent('');
@@ -130,6 +143,7 @@ describe('Game — integration', () => {
     const user = userEvent.setup();
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
     render(<Game />);
+    await switchToPvP(user);
     const squares = getBoardSquares();
 
     await user.click(squares[0]); // make a move
@@ -138,8 +152,7 @@ describe('Game — integration', () => {
     await user.click(resetBtn);
 
     expect(confirmSpy).toHaveBeenCalledOnce();
-    // Cancelled → board should still have the piece
-    expect(squares[0]).toHaveTextContent('X');
+    expect(squares[0]).toHaveTextContent('X'); // not reset
 
     confirmSpy.mockRestore();
   });
@@ -148,12 +161,56 @@ describe('Game — integration', () => {
     const user = userEvent.setup();
     render(<Game />);
 
-    const cpuBtn = screen.getByText(/vs cpu/i);
-    await user.click(cpuBtn);
-    expect(cpuBtn).toHaveClass('active');
-
     const pvpBtn = screen.getByText(/2 jugadores/i);
     await user.click(pvpBtn);
     expect(pvpBtn).toHaveClass('active');
+
+    const cpuBtn = screen.getByText(/vs cpu/i);
+    await user.click(cpuBtn);
+    expect(cpuBtn).toHaveClass('active');
+  });
+});
+
+describe('Game — CPU mode', () => {
+  it('blocks the board on O turn so the user cannot place O manually', async () => {
+    const user = userEvent.setup();
+    render(<Game />);
+    const squares = getBoardSquares();
+
+    await user.click(squares[0]); // X plays
+
+    // Board is now disabled for O turn — click should be ignored
+    await user.click(squares[1]);
+    expect(squares[1]).toHaveTextContent('');
+  });
+
+  it('CPU plays O after the 500ms delay', async () => {
+    vi.useFakeTimers();
+    render(<Game />);
+    const squares = getBoardSquares();
+
+    act(() => { fireEvent.click(squares[0]); }); // X plays
+
+    // Before delay fires: only X is placed
+    expect(squares.filter((sq) => sq.textContent !== '').length).toBe(1);
+
+    await act(async () => { vi.advanceTimersByTime(600); });
+
+    expect(squares.filter((sq) => sq.textContent !== '').length).toBeGreaterThanOrEqual(2);
+    vi.useRealTimers();
+  });
+
+  it('CPU places an O, not an X', async () => {
+    vi.useFakeTimers();
+    render(<Game />);
+    const squares = getBoardSquares();
+
+    act(() => { fireEvent.click(squares[0]); }); // X plays at 0
+
+    await act(async () => { vi.advanceTimersByTime(600); });
+
+    const oSquares = squares.filter((sq) => sq.textContent === 'O');
+    expect(oSquares.length).toBe(1);
+    vi.useRealTimers();
   });
 });

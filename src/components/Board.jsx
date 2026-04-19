@@ -2,14 +2,14 @@ import { calculateWinner, isDraw as checkDraw } from '../utils/gameLogic';
 import Square from './Square';
 import StatusMessage from './StatusMessage';
 
-export default function Board({ xIsNext, squares, onPlay }) {
+export default function Board({ xIsNext, squares, onPlay, disabled = false }) {
   const winnerInfo = calculateWinner(squares);
   const winner = winnerInfo?.winner ?? null;
   const winningSquares = winnerInfo?.winningSquares ?? [];
   const draw = checkDraw(squares);
 
   function handleClick(i) {
-    if (squares[i] || winner || draw) return;
+    if (disabled || squares[i] || winner || draw) return;
     const next = squares.slice();
     next[i] = xIsNext ? 'X' : 'O';
     onPlay(next);

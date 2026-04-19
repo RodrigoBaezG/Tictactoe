@@ -104,7 +104,12 @@ export default function Game() {
 
       <div className="game">
         <div className="game-board">
-          <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
+          <Board
+            xIsNext={xIsNext}
+            squares={currentSquares}
+            onPlay={handlePlay}
+            disabled={gameMode === 'cpu' && !xIsNext}
+          />
         </div>
         <div className="game-info">
           <button className="reset-button" onClick={handleReset}>
